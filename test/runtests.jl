@@ -22,6 +22,9 @@ function maxabsdif(A::AbstractArray, B::AbstractArray)
     return res
 end
 
+keywords(args...; kwds...) = kwds
+arguments(args...; kwds...) = args
+
 slice(A::AbstractArray{T,N}, i::Integer) where {T,N} =
     A[colons(Val(N-1))..., i]
 
@@ -41,10 +44,12 @@ end
 UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     UnfinishedContainer{K,V,D}(data)
 
-@testset "Containers" begin
-    D2 = Dict(:x => true, :y => 1.8, :units => "µm")
-    D3 = Dict(:x => 1, :y => 2, :z => 3)
+# Check show().
+show(stdout, MIME"text/plain"(),
+     Container(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5)))
+println()
 
+@testset "Containers" begin
     # Check missing specialization of Containers.contents().
     Q = UnfinishedContainer(Dict{Symbol,Any}())
     @test_throws ErrorException Q.units
@@ -56,8 +61,10 @@ UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     # Container with string keys.
     D1 = Dict("units" => "km", "Δx" => 0.20, "Δy" => 0.15)
     A1 = Container(D1)
+    T1 = typeof(A1)
     B1 = wrap(Container, D1)
     @test length(A1) == length(D1)
+    @test keytype(T1) == keytype(D1)
     @test keytype(A1) == keytype(D1)
     @test valtype(A1) == valtype(D1)
     for (k,v) in zip(keys(A1), values(A1))
@@ -69,6 +76,10 @@ UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     # A1 and D1 should be different, B1 abd D1 should be the same:
     @test A1.units == A1["units"] == D1["units"]
     A1.units = 50
+    @test contents(D1) === D1
+    @test contents(B1) === D1
+    @test contents(A1) !== D1
+    @test propertyname(T1, :gizmo) == "gizmo"
     @test A1.units == A1["units"] != D1["units"]
     @test B1.units == B1["units"] == D1["units"]
     @test haskey(A1, "Δx") == true
@@ -99,9 +110,13 @@ UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     D2 = Dict(:units => "µm", :Δx => 0.20, :Δy => 0.15)
     D3 = Dict(:name => "Mr. Doe", :Δx => 0.30, :Δy => 0.20)
     A2 = Container(D2)
+    T2 = typeof(A2)
     @test length(A2) == length(D2)
+    @test keytype(T2) == keytype(D2)
     @test keytype(A2) == keytype(D2)
     @test valtype(A2) == valtype(D2)
+    @test propertyname(T2, :gizmo) == :gizmo
+    @test propertynames(A2) == keys(A2)
     @test A2.units == A2[:units] == D2[:units]
     A2.units = 50
     @test A2.units == A2[:units] != D2[:units]
@@ -165,6 +180,34 @@ UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     @test all(x -> x == 1, values(merge(+, B5, B4)))
     @test all(x -> x == 1, values(merge(+, N2, B4)))
     @test all(x -> x == 1, values(merge!(+, B6, B5)))
+
+    # Check contents(Dict{...}, ...)
+    @test isa(contents(Dict{Any,Any},     D1), Dict{String,Any})
+    @test isa(contents(Dict{String,Any},  D1), Dict{String,Any})
+    @test isa(contents(Dict{Any,Any},     N1), Dict{Symbol,Any})
+    @test isa(contents(Dict{Any,Number},  N1), Dict{Symbol,Number})
+    @test isa(contents(Dict{Any,Integer}, N1), Dict{Symbol,Integer})
+    @test isa(contents(Dict{Any,Int16},   N1), Dict{Symbol,Int16})
+    kwds = keywords(i8=Int8(1), i16=Int16(2), i32=Int32(3), i64=Int64(4))
+    @test isa(contents(Dict{Any,Any};      kwds...), Dict{Symbol,Any})
+    @test isa(contents(Dict{Symbol,Any};   kwds...), Dict{Symbol,Any})
+    @test isa(contents(Dict{Any,Integer};  kwds...), Dict{Symbol,Integer})
+    @test isa(contents(Dict{Symbol,Int16}; kwds...), Dict{Symbol,Int16})
+    @test_throws MethodError contents(Dict{String,Int16}; kwds...)
+    args1 = (:i8=>Int8(1), :i16=>Int16(2), :i32=>Int32(3), :i64=>Int64(4))
+    @test isa(contents(Dict{Any,Any},      args1...), Dict{Symbol,Any})
+    @test isa(contents(Dict{Symbol,Any},   args1...), Dict{Symbol,Any})
+    @test isa(contents(Dict{Any,Integer},  args1...), Dict{Symbol,Integer})
+    @test isa(contents(Dict{Symbol,Int16}, args1...), Dict{Symbol,Int16})
+    args2 = map(kv -> String(kv[1]) => kv[2], args1)
+    @test isa(contents(Dict{Any,Any},      args2...), Dict{String,Any})
+    @test isa(contents(Dict{String,Any},   args2...), Dict{String,Any})
+    @test isa(contents(Dict{Any,Integer},  args2...), Dict{String,Integer})
+    @test isa(contents(Dict{String,Int16}, args2...), Dict{String,Int16})
+    args3 = ("i8"=>Int8(1), :i16=>Int16(2), :"32"=>Int32(3), :i64=>Int64(4))
+    @test isa(contents(Dict{Any,Any},      args3...), Dict{Any,Any})
+    @test isa(contents(Dict{Any,Integer},  args3...), Dict{Any,Integer})
+    @test isa(contents(Dict{Any,Int16},    args3...), Dict{Any,Int16})
 
     # FIXME: check for independancy with wrap() vs. Container()
 
