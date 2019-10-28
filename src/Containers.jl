@@ -143,6 +143,29 @@ wrap(::Type{Container{K,V,D}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
 """
 
 ```julia
+Containers.@newtype T
+```
+
+creates a new container type `T` which is a sub-type of
+`Containers.AbstractContainer` with symbolic keys and values of `Any` type.
+
+"""
+macro newtype(sym)
+    isa(sym, Symbol) || throw(ArgumentError("argument must be a symbol"))
+    T = esc(sym)
+    quote
+        struct $T <: Containers.AbstractContainer{Symbol,Any,Dict{Symbol,Any}}
+            data::Dict{Symbol,Any}
+            $T(args...; kwds...) =
+                new(Containers.contents(Dict{Symbol,Any}, args...; kwds...))
+        end
+        @inline Containers.contents(A::$T) = Base.getfield(A, :data)
+    end
+end
+
+"""
+
+```julia
 Containers.propertyname(T, sym)
 ```
 

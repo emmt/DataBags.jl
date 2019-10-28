@@ -265,6 +265,18 @@ implement the `obj.key` syntax to get/set the value of `key` (as a shortcut of
 `obj[:key]`) and which can be constructed using keywords, *e.g.* `obj =
 ContEx3(id=1, x=-3.14:0.1:3.14, units="µm")`.
 
+This usage is so common that a macro is provided by the `Containers` package
+and the above statements can be reduced to:
+
+```julia
+using Containers
+Containers.@newtype ContEx3
+```
+
+using the macro not only saves typing (to encourage creating such container
+types) but also warrants that the implementation is correct and follows further
+evolutions of the `Containers` package.
+
 
 
 [doc-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg

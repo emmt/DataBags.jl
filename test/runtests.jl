@@ -34,6 +34,9 @@ end
 UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
     UnfinishedContainer{K,V,D}(data)
 
+# Create our own container with provided macro.
+Containers.@newtype SmallDB
+
 # Check show().
 show(stdout, MIME"text/plain"(),
      Container(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5), date=now()))
@@ -201,9 +204,16 @@ println()
     @test isa(contents(Dict{Any,Integer},  args3...), Dict{Any,Integer})
     @test isa(contents(Dict{Any,Int16},    args3...), Dict{Any,Int16})
 
-    # FIXME: check for independancy with wrap() vs. Container()
-
-    # Check String is preferred over AbstractString.
+    # Test container type created by Containers.@newtype.
+    X = SmallDB(date=now(), value=π, arr=rand(3))
+    @test isa(X, SmallDB)
+    @test isa(X, Containers.AbstractContainer{Symbol,Any})
+    @test isa(X, AbstractDict)
+    @test length(X) == 3
+    X.more = "some thing else"
+    @test length(X) == 4
+    merge!(X, D2)
+    @test X.Δx == D2[:Δx]
 
 end
 
