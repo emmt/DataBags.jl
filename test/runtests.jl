@@ -1,5 +1,5 @@
 module ContainersTests
-using Test, Containers
+using Test, Containers, Dates
 using Containers: AbstractContainer, propertyname
 
 function samevalues(A::AbstractArray, B::AbstractArray)
@@ -24,16 +24,6 @@ end
 
 keywords(args...; kwds...) = kwds
 arguments(args...; kwds...) = args
-
-slice(A::AbstractArray{T,N}, i::Integer) where {T,N} =
-    A[colons(Val(N-1))..., i]
-
-dims = (3, 4, 5)
-A = rand(Float64, dims)
-V = view(A, :, 2:3, :)
-S = 1:2:70  # StepRange
-U = 3:50    # UnitRange
-atol = 1e-6
 
 # UnfinishedContainer does not extend Containers.contents()
 struct UnfinishedContainer{K,V,D<:AbstractDict{K,V}} <: AbstractContainer{K,V,D}
