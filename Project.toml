@@ -1,0 +1,13 @@
+name = "Containers"
+uuid = "497ad153-c143-42a2-80c7-87bdfcf8382a"
+authors = ["Éric Thiébaut <eric.thiebaut@univ-lyon1.fr>"]
+version = "0.1.0"
+
+[compat]
+julia = "1.0, 1.1, 1.2"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
