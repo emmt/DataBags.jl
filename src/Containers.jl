@@ -222,8 +222,14 @@ function Base.show(io::IO, ::MIME"text/plain",
     n = length(A)
     summary(io, A)
     println(io, ":")
-    for key in sort(collect(keys(A)))
-        print(io, "  ", repr(key), " => ")
+    lstkeys = sort(collect(keys(A)))
+    strkeys = repr.(lstkeys)
+    maxlen = maximum(length, strkeys)
+    spaces = [repeat(" ", r) for r in 0:maxlen]
+    for i in 1:n
+        key = lstkeys[i]
+        str = strkeys[i]
+        print(io, "  ", str, spaces[maxlen + 1 - length(str)], " => ")
         _showval(io, A[key])
         if (n -= 1) > 0
             println(io)
