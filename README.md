@@ -7,9 +7,10 @@
 
 `Containers` is a small [Julia][julia-url] package which combines properties
 and dictionaries to associate keys (preferably symbols or strings) with values
-(of any types) in a flexible way.  For the user viewpoint, containers behave
-like dynamic structures whose fields can be modified, created or deleted with
-the syntax of structured objects, *i.e.* `obj.key`. As an example:
+(of any types) in a flexible way.  From the user viewpoint, containers behave
+like dynamic structures whose fields can be modified or created with the syntax
+of structured objects, *i.e.* `obj.key`.  They can also be deleted by calling
+`delete!(obj,key)`.  As an example:
 
 ```julia
 using Containers, Dates
@@ -26,10 +27,11 @@ A[:Δx]              # is the same as `A.Δx`
 A[:y] = cos.(A[:x]) # is the same as `A.y = cos.(A.x)`
 ```
 
-but is, to my opinion, less readable and boring to type especially in an
+but this is, to my opinion, less readable and boring to type especially in an
 interactive session.  More generally, container types are sub-types of
 `AbstractDict` so you can expect that containers can be used like dictionaries.
-For instance, you can apply `pop`, `merge`, `delete!`, *etc.* on a container.
+For instance, you can apply `pop`, `merge`, `merge!`, `delete!`, *etc.* on a
+container.
 
 Admittedly, containers are less efficient than true Julia structures (there is
 some overhead for retrieving a field of a container) but they can be very
@@ -38,7 +40,7 @@ contents of your data structures is not yet determined, containers let you
 extend their contents without the pain of redefining your structures,
 re-including your code and recreating your objects, *etc.* Tools such as
 [`Revise`][revise-url] can help but cannot automatically determine what to do
-with new members of existing objects if their type definition is changed.
+with new members of existing objects if their type definition has changed.
 
 
 ## Creation of containers
@@ -58,7 +60,7 @@ D = Container(1 => 0.9, 2 => sqrt(2), 3 => 4)
 
 These statements yield two containers, `A` and `B`, with symbolic keys (of type
 `Symbol`), a container, `C`, with textual keys (of type `String`) and a
-container, `E`, with integer keys (of type `Int`).  All these containers can
+container, `D`, with integer keys (of type `Int`).  All these containers can
 store values of `Any` type.
 
 Accessing a value is possible via the syntax `obj[key]` or, for symbolic and
@@ -83,14 +85,15 @@ the values of `E` are unspecific while the values of `F` are restricted to be
 The same rules apply if the container is built out of an existing dictionary
 (do not forget that containers are themselves abstract dictionaries).  So
 `Container(F)` yields a container with keys of the same type as those of `F`
-(that is `Integer` in that case) and values of `Any` type.
+(that is `Integer` in that case) but values of `Any` type.
 
 When a container is built out of an existing dictionary, the container creates
 a new dictionary to store its values and initializes it with the contents of
 the dictionary passed in argument.  After the creation of the container, the
 container and the original dictionary are independent.  Their values, which may
 be references to other objects, may not be independent though.  If you want to
-make a container that stores its contents in a dictionary, say `dict`, call:
+make a container that stores its contents in a given dictionary, say `dict`,
+call:
 
 ```julia
 wrap(Container, dict)
@@ -103,7 +106,9 @@ Container(dict)
 ```
 
 If no arguments nor keywords are specified, the container created by
-`Container()` is initially empty and has symbolic keys with any type of values.
+`Container()` is initially empty and has symbolic keys with any type of values,
+*i.e.* an instance of `Dict{Symbol,Any}` is used for storing the key-value
+pairs.
 
 Unless `iterate` is overridden, iterating on an `AbstractContainer` is
 iterating on its key-value pairs.
@@ -119,14 +124,15 @@ sub-types of `Containers.AbstractContainer` so as to benefit from the common
 interface implemented for containers.  The following steps are needed:
 
 1. Make your type inherit from `Containers.AbstractContainer{K,V,D}` with `K`
-   the key type, `V` the value type and `D <: AbstractDict{K,V}` the type of
-   the dictionary storing the key-value map.
+   the key type, `V` the value type and `D<:AbstractDict{K,V}` the type of the
+   dictionary storing the key-value pairs.
 
 2. Extend the `Containers.contents(A::T)` method for your custom type `T` so
-   that it returns the dictionary storing the key-value map in an instance `A`.
+   that it returns the dictionary storing the key-value pairs in an instance
+   `A`.
 
-3. Provide some constructors to facilitate creation of objects of type `T`.
-   You may also consider extending the `Containers.wrap` method if.
+3. Optionally provide some constructor(s) to facilitate creation of objects of
+   type `T`.  You may also consider extending the `Containers.wrap` method if.
 
 Here is a first example:
 
@@ -151,10 +157,10 @@ whose type is derived from `Containers.AbstractContainer` as for the member
 `getproperty` and `setproperty!` methods are overridden to implement the
 `obj.key` syntax for sub-types of `Containers.AbstractContainer`.
 
-The above example, it is only possible to create a container of type
+In the above example, it is only possible to create a container of type
 `ContEx1` out of a dictionary which is shared by the container.  The only
-advantage over a simple dictionary is the `obj.key` syntax provided keys
-have type `Symbol` or `String`.
+advantage over a simple dictionary is the `obj.key` syntax provided keys have
+type `Symbol` or `String`.
 
 To improve over this first example, we want to implement the same kind of
 creation rules as `Container`.  This leads to the following code:
@@ -175,6 +181,7 @@ end
 
 # Outer constructor.
 ContEx2(args...; kdws...) =
+    wrap(ContEx2, contents(Dict{Any,Any}, args...; kdws...))
 
 # Override `Containers.contents` to yield the dictionary that stores the data.
 Containers.contents(A::ContEx2) = Base.getfield(A, :data)
@@ -183,28 +190,26 @@ Containers.contents(A::ContEx2) = Base.getfield(A, :data)
 # its data in a given dictionary.
 Containers.wrap(::Type{ContEx2}, data::D) where {K,V,D<:AbstractDict{K,V}} =
     ContEx2{K,V,D}(data)
-    wrap(ContEx2, contents(Dict{Any,Any}, args...; kdws...))
 ```
 
 In this second example, we have:
 
-* Explictely defined an inner constructor so as to forbid creating a
-  container that shares an existing dictionary, say `dict`, by calling the
-  constructor `ContEx2`.  This is however possible by calling
-  `wrap(ContEx2,dict)`.
+* Explictely defined an inner constructor so as to forbid creating a container
+  that shares an existing dictionary, say `dict`, by calling the constructor
+  `ContEx2`.  This is however possible by calling `wrap(ContEx2,dict)`.
 
-* Defined an outer constructor that calls the `wrap` method over the
-  dictionary created by the `Containers.contents` method called with
-  `Dict{K,V}` as a first argument, followed by all arguments and keywords
-  passed to your constructor:
+* Defined an outer constructor that calls the `wrap` method over the dictionary
+  created by the `Containers.contents` method called with `Dict{K,V}` as a
+  first argument, followed by all arguments and keywords passed to your
+  constructor:
 
 * Overridden methods `Containers.contents` (as in the first example) and
   `Containers.wrap`.  The latter is to wrap a dictionary in a new `ContEx2`
   instance taking care of supplying the correct type parameters `{K,V,D}`.
 
-To add constructors with constraiunts on the type of keys and values,
-you may have a look at the complete implementation of the `Container`
-type which is summarized below:
+To add constructors with constraints on the type of keys and values, you may
+have a look at the complete implementation of the `Container` type which is
+summarized below:
 
 ```julia
 struct Container{K,V,D<:AbstractDict{K,V}} <: AbstractContainer{K,V,D}
@@ -240,9 +245,9 @@ wrap(::Type{Container{K,V,D}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
 ## A useful minimalist example
 
 The `Container` type provided by `Containers` may be sufficient for your needs
-but you may want to specialize it a bit to exploit type dispatching and
-implement some specific behavior.  The most simple example of creating such a
-sub-type takes half a dozen of lines of code:
+but you may want to specialize it a bit to exploit the power of *type
+dispatching* in Julia and to implement some specific behavior.  The most simple
+example of creating such a sub-type takes about half a dozen of lines of code:
 
 ```julia
 using Containers
