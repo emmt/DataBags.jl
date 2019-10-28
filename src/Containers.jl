@@ -69,16 +69,16 @@ contents(::Type{Dict{Any,Any}}, A::AbstractDict{K}) where {K} =
     merge!(Dict{K,Any}(), contents(A))
 contents(::Type{Dict{K,Any}}, A::AbstractDict) where {K} =
     merge!(Dict{K,Any}(), contents(A))
+contents(::Type{Dict{Any,V}}, A::AbstractDict{K}) where {K,V} =
+    merge!(Dict{K,V}(), contents(A))
 contents(::Type{Dict{K,V}}, A::AbstractDict) where {K,V} =
     merge!(Dict{K,V}(), contents(A))
 
 # Methods for initial contents specified by keywords.
-contents(::Type{Dict{Any,Any}}; kwds...) =
-    Dict{Symbol,Any}(kwds...)
-contents(::Type{Dict{K,Any}}; kwds...) where {K} =
-    Dict{Symbol,Any}(kwds...)
-contents(::Type{Dict{K,V}}; kwds...) where {K,V} =
-    Dict{K,V}(kwds...)
+contents(::Type{Dict{Any,Any}}; kwds...) = Dict{Symbol,Any}(kwds...)
+contents(::Type{Dict{Symbol,Any}}; kwds...) = Dict{Symbol,Any}(kwds...)
+contents(::Type{Dict{Any,V}}; kwds...) where {V} = Dict{Symbol,V}(kwds...)
+contents(::Type{Dict{Symbol,V}}; kwds...) where {V} = Dict{Symbol,V}(kwds...)
 
 # Methods for initial contents specified as key-value pairs.  Unless key or
 # value types are explictely specified, we want to have a dictionary whose
@@ -91,14 +91,20 @@ contents(::Type{Dict{K,V}}; kwds...) where {K,V} =
 # must be known
 contents(::Type{Dict{K,V}}, args::Pair...) where {K,V} = Dict{K,V}(args...)
 contents(::Type{Dict{K,Any}}, args::Pair...) where {K} = Dict{K,Any}(args...)
+contents(::Type{Dict{Any,V}}, args::Pair{K}...) where {K,V} = Dict{K,V}(args...)
+contents(::Type{Dict{Any,V}}, args::Pair{<:AbstractString}...) where {V} =
+    Dict{String,V}(args...)
+contents(::Type{Dict{Any,V}}, args::Pair...) where {V} =
+    withspecificvaluetype(V, Dict(args...))
 contents(::Type{Dict{Any,Any}}, args::Pair{K}...) where {K} =
     Dict{K,Any}(args...)
 contents(::Type{Dict{Any,Any}}, args::Pair{<:AbstractString}...) =
     Dict{String,Any}(args...)
 contents(::Type{Dict{Any,Any}}, args::Pair...) =
-    withleastspecificvalues(Dict(args...))
-withleastspecificvalues(data::Dict{<:Any,Any}) = data
-withleastspecificvalues(data::Dict{K}) where {K} = Dict{K,Any}(data)
+    withspecificvaluetype(Any, Dict(args...))
+
+withspecificvaluetype(::Type{V}, data::Dict{<:Any,V}) where {V} = data
+withspecificvaluetype(::Type{V}, data::Dict{K}) where {K,V} = Dict{K,V}(data)
 
 """
 
