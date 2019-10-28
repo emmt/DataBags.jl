@@ -36,7 +36,7 @@ UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
 
 # Check show().
 show(stdout, MIME"text/plain"(),
-     Container(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5)))
+     Container(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5), date=now()))
 println()
 
 @testset "Containers" begin
@@ -55,6 +55,7 @@ println()
     B1 = wrap(Container, D1)
     @test length(A1) == length(D1)
     @test keytype(T1) == keytype(D1)
+    @test valtype(T1) == valtype(D1)
     @test keytype(A1) == keytype(D1)
     @test valtype(A1) == valtype(D1)
     for (k,v) in zip(keys(A1), values(A1))
@@ -103,6 +104,7 @@ println()
     T2 = typeof(A2)
     @test length(A2) == length(D2)
     @test keytype(T2) == keytype(D2)
+    @test keytype(A2) == keytype(D2)
     @test keytype(A2) == keytype(D2)
     @test valtype(A2) == valtype(D2)
     @test propertyname(T2, :gizmo) == :gizmo

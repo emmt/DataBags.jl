@@ -5,6 +5,8 @@ export
     contents,
     wrap
 
+using Dates
+
 """
 
 `AbstractContainer{K,V,D}` is the super-type of containers.
@@ -241,5 +243,6 @@ _showval(io::IO, val::Number) = print(io, val)
 _showval(io::IO, val::AbstractString) = print(io, repr(val))
 _showval(io::IO, val::AbstractRange) = print(io, repr(val))
 _showval(io::IO, val::T) where {T} = summary(io, val)
+_showval(io::IO, val::DateTime) = print(io, "DateTime(\"", repr(val), "\")")
 
 end # module
