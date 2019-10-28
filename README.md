@@ -4,7 +4,6 @@
 |:--------------------------------|:----------------------------------------------------------------|:--------------------------------------------------------------------|
 | [![][license-img]][license-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![][coveralls-img]][coveralls-url] [![][codecov-img]][codecov-url] |
 
-
 `Containers` is a small [Julia][julia-url] package which combines properties
 and dictionaries to associate keys (preferably symbols or strings) with values
 (of any types) in a flexible way.  From the user viewpoint, containers behave
@@ -278,7 +277,6 @@ types) but also warrants that the implementation is correct and follows further
 evolutions of the `Containers` package.
 
 
-
 [doc-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [doc-dev-url]: https://emmt.github.io/Containers.jl/dev
 
@@ -291,11 +289,11 @@ evolutions of the `Containers` package.
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/emmt/Containers.jl?branch=master
 [appveyor-url]: https://ci.appveyor.com/project/emmt/Containers-jl/branch/master
 
-[coveralls-img]: https://coveralls.io/repos/emmt/Containers.jl/badge.svg?branch=master&service=github
+[coveralls-img]: https://coveralls.io/repos/github/emmt/Containers.jl/badge.svg?branch=master
 [coveralls-url]: https://coveralls.io/github/emmt/Containers.jl?branch=master
 
-[codecov-img]: http://codecov.io/github/emmt/Containers.jl/coverage.svg?branch=master
-[codecov-url]: http://codecov.io/github/emmt/Containers.jl?branch=master
+[codecov-img]: https://codecov.io/gh/emmt/Containers.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/emmt/Containers.jl
 
 [julia-url]: https://julialang.org/
 
