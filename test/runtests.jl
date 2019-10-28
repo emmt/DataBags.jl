@@ -1,6 +1,6 @@
 module ContainersTests
 using Test, Containers, Dates
-using Containers: AbstractContainer, propertyname
+using Containers: AbstractContainer, propertyname, withspecificvaluetype
 
 function samevalues(A::AbstractArray, B::AbstractArray)
     @assert has_standard_indexing(A, B)
@@ -176,6 +176,47 @@ println()
     @test all(x -> x == 1, values(merge(+, N2, B4)))
     @test all(x -> x == 1, values(merge!(+, B6, B5)))
 
+    # Explictely check wrap() and check that the 2 objects share the same data.
+    W1 = wrap(Container, D1)
+    @test keytype(W1) == keytype(D1) && valtype(W1) == valtype(D1)
+    @test !haskey(W1, "newkey") && !haskey(D1, "newkey")
+    W1.newkey = 12345
+    @test haskey(W1, "newkey") && haskey(D1, "newkey")
+    @test W1.newkey == pop!(D1, "newkey")
+    @test !haskey(W1, "newkey") && !haskey(D1, "newkey")
+    #
+    W2 = wrap(Container, D2)
+    @test keytype(W2) == keytype(D2) && valtype(W2) == valtype(D2)
+    @test !haskey(W2, :newkey) && !haskey(D2, :newkey)
+    W2.newkey = 12345
+    @test haskey(W2, :newkey) && haskey(D2, :newkey)
+    @test W2.newkey == pop!(D2, :newkey)
+    @test !haskey(W2, :newkey) && !haskey(D2, :newkey)
+    #
+    W3 = wrap(Container{keytype(D2)}, D2)
+    @test keytype(W3) == keytype(D2) && valtype(W3) == valtype(D2)
+    @test !haskey(W3, :newkey) && !haskey(D2, :newkey)
+    W3.newkey = 12345
+    @test haskey(W3, :newkey) && haskey(D2, :newkey)
+    @test W3.newkey == pop!(D2, :newkey)
+    @test !haskey(W3, :newkey) && !haskey(D2, :newkey)
+    #
+    W4 = wrap(Container{keytype(N2),valtype(N2)}, N2)
+    @test keytype(W4) == keytype(N2) && valtype(W4) == valtype(N2)
+    @test !haskey(W4, :newkey) && !haskey(N2, :newkey)
+    W4.newkey = 12345
+    @test haskey(W4, :newkey) && haskey(N2, :newkey)
+    @test W4.newkey == pop!(N2, :newkey)
+    @test !haskey(W4, :newkey) && !haskey(N2, :newkey)
+    #
+    W5 = wrap(Container{keytype(N1),valtype(N1),typeof(N1)}, N1)
+    @test keytype(W5) == keytype(N1) && valtype(W5) == valtype(N1)
+    @test !haskey(W5, :newkey) && !haskey(N1, :newkey)
+    W5.newkey = 12345
+    @test haskey(W5, :newkey) && haskey(N1, :newkey)
+    @test W5.newkey == pop!(N1, :newkey)
+    @test !haskey(W5, :newkey) && !haskey(N1, :newkey)
+
     # Check contents(Dict{...}, ...)
     @test isa(contents(Dict{Any,Any},     D1), Dict{String,Any})
     @test isa(contents(Dict{String,Any},  D1), Dict{String,Any})
@@ -215,6 +256,9 @@ println()
     merge!(X, D2)
     @test X.Δx == D2[:Δx]
 
+    # Miscellaneaous.
+    @test withspecificvaluetype(valtype(D2), D2) == D2
+    @test withspecificvaluetype(Real, N2) == Dict{keytype(N2),Real}(N2)
 end
 
 end # module
