@@ -1,5 +1,5 @@
 module ContainersTests
-using Test, Random, Containers
+using Test, Containers
 using Containers: AbstractContainer, propertyname
 
 function samevalues(A::AbstractArray, B::AbstractArray)
