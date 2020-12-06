@@ -1,6 +1,6 @@
 name = "Containers"
 uuid = "497ad153-c143-42a2-80c7-87bdfcf8382a"
-authors = ["Éric Thiébaut <eric.thiebaut@univ-lyon1.fr>"]
+authors = ["Éric Thiébaut <https://github.com/emmt>"]
 version = "0.1.0"
 
 [deps]
