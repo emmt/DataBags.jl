@@ -214,7 +214,8 @@ Base.getkey(A::AbstractContainer, key, def) = getkey(contents(A), key, def)
 Base.get(A::AbstractContainer, key, def) = get(contents(A), key, def)
 Base.get!(A::AbstractContainer, key, def) = get!(contents(A), key, def)
 Base.getindex(A::AbstractContainer, key) = getindex(contents(A), key)
-Base.setindex!(A::AbstractContainer, val, key) = setindex!(contents(A), val, key)
+Base.setindex!(A::AbstractContainer, val, key) =
+    (setindex!(contents(A), val, key); return A)
 Base.delete!(A::AbstractContainer, key) = begin
     delete!(contents(A), key)
     return A
