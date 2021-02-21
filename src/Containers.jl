@@ -33,30 +33,24 @@ Container{K,V}(args...; kwds...) where {K,V} =
 @inline contents(A::Container) = Base.getfield(A, :data)
 
 """
-
-```julia
-Containers.contents(A)
-```
+    Containers.contents(A)
 
 yields the contents associated with an instance `A` of a sub-type of
 `Containers.AbstractContainer` or of `AbstractDict`.
 
 This method should be specialized by types derived from
-`Containers.AbstractContainer`, this is the most simple way to inherit of
-the common behavior implemented by this abstract type.
+`Containers.AbstractContainer`, this is the most simple way to inherit of the
+common behavior implemented by this abstract type.
 
-The `contents` method is also meant to be called by container constructors
-to create a new dictionary out of their arguments.  For that usage, the
-syntax is:
+The `contents` method is also meant to be called by container constructors to
+create a new dictionary out of their arguments.  For that usage, the syntax is:
 
-```julia
-content(Dict{K,V}, args...; kwds...) -> Dict
-```
+    content(Dict{K,V}, args...; kwds...) -> Dict
 
-which yields a new dictionary built out of arguments `args` and keywords
-`kwds` and accounting for type constraints set by `K` and `V` for
-respectively the keys and values of the returned dictionary.  Types `K`
-and/or `V` can be ``Any` if no type constraints are imposed.
+which yields a new dictionary built out of arguments `args` and keywords `kwds`
+and accounting for type constraints set by `K` and `V` for respectively the
+keys and values of the returned dictionary.  Types `K` and/or `V` can be ``Any`
+if no type constraints are imposed.
 
 """ contents
 
@@ -109,26 +103,21 @@ withspecificvaluetype(::Type{V}, data::Dict{<:Any,V}) where {V} = data
 withspecificvaluetype(::Type{V}, data::Dict{K}) where {K,V} = Dict{K,V}(data)
 
 """
+    wrap(T::Type{<:AbstractContainer}, arg) -> obj::T
 
-```julia
-wrap(T::Type, arg) -> obj::T
-```
-
-wraps argument `arg` in an object of type `T` which is returned.  The
-returned object shares its contents with `arg`.
+wraps argument `arg` in a container of type `T`.  The returned object shares
+its contents with `arg`.
 
 This method can be used to build a container from an existing dictionary
 without duplicating the dictionary.  As an example:
 
-```julia
-dict = Dict{Symbol,Any}(:a => 1, :foo => "bar")
-cont = wrap(Container, dict)
-cont.b = 33
-dict["b"] == 33
-```
+    dict = Dict{Symbol,Any}(:a => 1, :foo => "bar")
+    cont = wrap(Container, dict)
+    cont.b = 33
+    dict["b"] == 33 # yields `true`
 
-yields `true`. If the statement `wrap(Container, dict)` is replaced
-by `Container(dict)`, the result of the final test is `false`.
+If the statement `wrap(Container, dict)` is replaced by `Container(dict)`, the
+result of the last statement is `false`.
 
 """
 wrap(::Type{Container}, data::D) where {K,V,D<:AbstractDict{K,V}} =
@@ -141,10 +130,7 @@ wrap(::Type{Container{K,V,D}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
     wrap(Container, data)
 
 """
-
-```julia
-Containers.@newtype T
-```
+    Containers.@newtype T
 
 creates a new container type `T` which is a sub-type of
 `Containers.AbstractContainer` with symbolic keys and values of `Any` type.
@@ -164,10 +150,7 @@ macro newtype(sym)
 end
 
 """
-
-```julia
-Containers.propertyname(T, sym)
-```
+    Containers.propertyname(T, sym)
 
 converts symbol `sym` to a suitable key for container of type `T` (a
 sub-type of `Containers.AbstractContainer`), throwing an error if this
