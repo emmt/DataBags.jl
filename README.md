@@ -150,11 +150,11 @@ end
 Containers.contents(A::ContEx1) = Base.getfield(A, :data)
 ```
 
-Note that `Base.getfield` has to be used to retrieve a member of objects
-whose type is derived from `Containers.AbstractContainer` as for the member
-`data` of the object `A` in the above example.  This is because the
-`getproperty` and `setproperty!` methods are overridden to implement the
-`obj.key` syntax for sub-types of `Containers.AbstractContainer`.
+Note that `Base.getfield` has to be used to retrieve a member of objects whose
+type is derived from `Containers.AbstractContainer` as for the member `data` of
+the object `A` in the above example.  This is because the `getproperty` and
+`setproperty!` methods are overridden to implement the `obj.key` syntax for
+sub-types of `Containers.AbstractContainer`.
 
 In the above example, it is only possible to create a container of type
 `ContEx1` out of a dictionary which is shared by the container.  The only
@@ -283,8 +283,8 @@ evolutions of the `Containers` package.
 [license-url]: ./LICENSE.md
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 
-[travis-img]: https://travis-ci.com/emmt/Containers.jl.svg?branch=master
-[travis-url]: https://travis-ci.com/emmt/Containers.jl
+[travis-img]: https://travis-ci.org/emmt/Containers.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/emmt/Containers.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/emmt/Containers.jl?branch=master
 [appveyor-url]: https://ci.appveyor.com/project/emmt/Containers-jl/branch/master
