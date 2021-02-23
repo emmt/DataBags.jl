@@ -1,7 +1,7 @@
-module Containers
+module DataBags
 
 export
-    Container,
+    DataBag,
     contents,
     wrap
 
@@ -9,40 +9,40 @@ using Dates
 
 """
 
-`AbstractContainer{K,V,D}` is the super-type of containers.
+`AbstractDataBag{K,V,D}` is the super-type of data-bags.
 
 """
-abstract type AbstractContainer{K,V,D<:AbstractDict{K,V}} <: AbstractDict{K,V} end
+abstract type AbstractDataBag{K,V,D<:AbstractDict{K,V}} <: AbstractDict{K,V} end
 
-struct Container{K,V,D<:AbstractDict{K,V}} <: AbstractContainer{K,V,D}
+struct DataBag{K,V,D<:AbstractDict{K,V}} <: AbstractDataBag{K,V,D}
     data::D
-    Container{K,V,D}(data::D) where {K,V,D<:AbstractDict{K,V}} =
+    DataBag{K,V,D}(data::D) where {K,V,D<:AbstractDict{K,V}} =
         new{K,V,D}(data)
 end
 
 # Generic outer constructors relying on `contents(Dict{K,V},...)` to build
 # their contents.
-Container(args...; kwds...) =
-    wrap(Container, contents(Dict{Any,Any}, args...; kwds...))
-Container{K}(args...; kwds...) where {K} =
-    wrap(Container, contents(Dict{K,Any}, args...; kwds...))
-Container{K,V}(args...; kwds...) where {K,V} =
-    wrap(Container, contents(Dict{K,V}, args...; kwds...))
+DataBag(args...; kwds...) =
+    wrap(DataBag, contents(Dict{Any,Any}, args...; kwds...))
+DataBag{K}(args...; kwds...) where {K} =
+    wrap(DataBag, contents(Dict{K,Any}, args...; kwds...))
+DataBag{K,V}(args...; kwds...) where {K,V} =
+    wrap(DataBag, contents(Dict{K,V}, args...; kwds...))
 
-# Extends the `contents` methods to benefit from the API of `AbstractContainer`.
-@inline contents(A::Container) = Base.getfield(A, :data)
+# Extends the `contents` methods to benefit from the API of `AbstractDataBag`.
+@inline contents(A::DataBag) = Base.getfield(A, :data)
 
 """
-    Containers.contents(A)
+    DataBags.contents(A)
 
 yields the contents associated with an instance `A` of a sub-type of
-`Containers.AbstractContainer` or of `AbstractDict`.
+`DataBags.AbstractDataBag` or of `AbstractDict`.
 
 This method should be specialized by types derived from
-`Containers.AbstractContainer`, this is the most simple way to inherit of the
+`DataBags.AbstractDataBag`, this is the most simple way to inherit of the
 common behavior implemented by this abstract type.
 
-The `contents` method is also meant to be called by container constructors to
+The `contents` method is also meant to be called by data-bag constructors to
 create a new dictionary out of their arguments.  For that usage, the syntax is:
 
     content(Dict{K,V}, args...; kwds...) -> Dict
@@ -54,12 +54,12 @@ if no type constraints are imposed.
 
 """ contents
 
-@noinline contents(::T) where {T<:AbstractContainer} =
-    error(string("method Containers.contents has not been specialized for ", T))
+@noinline contents(::T) where {T<:AbstractDataBag} =
+    error(string("method DataBags.contents has not been specialized for ", T))
 @inline contents(A::AbstractDict) = A
 
 # Methods for initial contents set from an existing dictionary data
-# (e.g. another container).  We create a new empty dictionary with proper
+# (e.g. another data-bag).  We create a new empty dictionary with proper
 # key and value types and fill it with the contents of the argument.
 contents(::Type{Dict{Any,Any}}, A::AbstractDict{K}) where {K} =
     merge!(Dict{K,Any}(), contents(A))
@@ -103,109 +103,109 @@ withspecificvaluetype(::Type{V}, data::Dict{<:Any,V}) where {V} = data
 withspecificvaluetype(::Type{V}, data::Dict{K}) where {K,V} = Dict{K,V}(data)
 
 """
-    wrap(T::Type{<:AbstractContainer}, arg) -> obj::T
+    wrap(T::Type{<:AbstractDataBag}, arg) -> obj::T
 
-wraps argument `arg` in a container of type `T`.  The returned object shares
+wraps argument `arg` in a data-bag of type `T`.  The returned object shares
 its contents with `arg`.
 
-This method can be used to build a container from an existing dictionary
+This method can be used to build a data-bag from an existing dictionary
 without duplicating the dictionary.  As an example:
 
     dict = Dict{Symbol,Any}(:a => 1, :foo => "bar")
-    cont = wrap(Container, dict)
+    cont = wrap(DataBag, dict)
     cont.b = 33
     dict["b"] == 33 # yields `true`
 
-If the statement `wrap(Container, dict)` is replaced by `Container(dict)`, the
+If the statement `wrap(DataBag, dict)` is replaced by `DataBag(dict)`, the
 result of the last statement is `false`.
 
 """
-wrap(::Type{Container}, data::D) where {K,V,D<:AbstractDict{K,V}} =
-    Container{K,V,D}(data)
-wrap(::Type{Container{K}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
-    wrap(Container, data)
-wrap(::Type{Container{K,V}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
-    wrap(Container, data)
-wrap(::Type{Container{K,V,D}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
-    wrap(Container, data)
+wrap(::Type{DataBag}, data::D) where {K,V,D<:AbstractDict{K,V}} =
+    DataBag{K,V,D}(data)
+wrap(::Type{DataBag{K}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
+    wrap(DataBag, data)
+wrap(::Type{DataBag{K,V}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
+    wrap(DataBag, data)
+wrap(::Type{DataBag{K,V,D}}, data::D) where {K,V,D<:AbstractDict{K,V}} =
+    wrap(DataBag, data)
 
 """
-    Containers.@newtype T
+    DataBags.@newtype T
 
-creates a new container type `T` which is a sub-type of
-`Containers.AbstractContainer` with symbolic keys and values of `Any` type.
+creates a new data-bag type `T` which is a sub-type of
+`DataBags.AbstractDataBag` with symbolic keys and values of `Any` type.
 
 """
 macro newtype(sym)
     isa(sym, Symbol) || throw(ArgumentError("argument must be a symbol"))
     T = esc(sym)
     quote
-        struct $T <: Containers.AbstractContainer{Symbol,Any,Dict{Symbol,Any}}
+        struct $T <: DataBags.AbstractDataBag{Symbol,Any,Dict{Symbol,Any}}
             data::Dict{Symbol,Any}
             $T(args...; kwds...) =
-                new(Containers.contents(Dict{Symbol,Any}, args...; kwds...))
+                new(DataBags.contents(Dict{Symbol,Any}, args...; kwds...))
         end
-        @inline Containers.contents(A::$T) = Base.getfield(A, :data)
+        @inline DataBags.contents(A::$T) = Base.getfield(A, :data)
     end
 end
 
 """
-    Containers.propertyname(T, sym)
+    DataBags.propertyname(T, sym)
 
-converts symbol `sym` to a suitable key for container of type `T` (a
-sub-type of `Containers.AbstractContainer`), throwing an error if this
-conversion is not supported.
+converts symbol `sym` to a suitable key for data-bag of type `T` (a sub-type of
+`DataBags.AbstractDataBag`), throwing an error if this conversion is not
+supported.
 
 """
-propertyname(::Type{<:AbstractContainer{Symbol}}, sym::Symbol) = sym
-propertyname(::Type{<:AbstractContainer{String}}, sym::Symbol) = String(sym)
-@noinline propertyname(::Type{T}, sym::Symbol) where {K,T<:AbstractContainer{K}} =
+propertyname(::Type{<:AbstractDataBag{Symbol}}, sym::Symbol) = sym
+propertyname(::Type{<:AbstractDataBag{String}}, sym::Symbol) = String(sym)
+@noinline propertyname(::Type{T}, sym::Symbol) where {K,T<:AbstractDataBag{K}} =
     error(string("Converting symbolic key to type `", K, "` is not ",
                  "implemented. As a result, syntax `obj.key` is not ",
                  "supported for objects of type `", T, "`."))
 
 # Extend methods so that syntax `obj.field` can be used.
-@inline Base.getproperty(A::T, sym::Symbol) where {T<:AbstractContainer} =
+@inline Base.getproperty(A::T, sym::Symbol) where {T<:AbstractDataBag} =
     getindex(contents(A), propertyname(T, sym))
-@inline Base.setproperty!(A::T, sym::Symbol, val) where {T<:AbstractContainer} =
+@inline Base.setproperty!(A::T, sym::Symbol, val) where {T<:AbstractDataBag} =
     setindex!(contents(A), val, propertyname(T, sym))
 
 # FIXME: Should return `Tuple(keys(contents(A)))` to conform to the doc. of
 #        `propertynames` but this is slower and for most purposes, an iterable
 #        is usually needed.
-Base.propertynames(A::AbstractContainer, private::Bool=false) = keys(A)
+Base.propertynames(A::AbstractDataBag, private::Bool=false) = keys(A)
 
-Base.convert(::Type{T}, A::T) where {T<:AbstractContainer} = A
-Base.convert(::Type{T}, A::AbstractContainer) where {T<:AbstractContainer} =
+Base.convert(::Type{T}, A::T) where {T<:AbstractDataBag} = A
+Base.convert(::Type{T}, A::AbstractDataBag) where {T<:AbstractDataBag} =
     T(A)
 
-Base.keytype(::T) where {T<:AbstractContainer} = keytype(T)
-Base.keytype(::Type{<:AbstractContainer{K,V}}) where {K,V} = K
+Base.keytype(::T) where {T<:AbstractDataBag} = keytype(T)
+Base.keytype(::Type{<:AbstractDataBag{K,V}}) where {K,V} = K
 
-Base.valtype(::T) where {T<:AbstractContainer} = valtype(T)
-Base.valtype(::Type{<:AbstractContainer{K,V}}) where {K,V} = V
+Base.valtype(::T) where {T<:AbstractDataBag} = valtype(T)
+Base.valtype(::Type{<:AbstractDataBag{K,V}}) where {K,V} = V
 
-Base.length(A::AbstractContainer) = length(contents(A))
+Base.length(A::AbstractDataBag) = length(contents(A))
 
-Base.iterate(A::AbstractContainer) = iterate(contents(A))
-Base.iterate(A::AbstractContainer, state) = iterate(contents(A), state)
+Base.iterate(A::AbstractDataBag) = iterate(contents(A))
+Base.iterate(A::AbstractDataBag, state) = iterate(contents(A), state)
 
-Base.haskey(A::AbstractContainer, key) = haskey(contents(A), key)
-Base.keys(A::AbstractContainer) = keys(contents(A))
-Base.values(A::AbstractContainer) = values(contents(A))
-Base.getkey(A::AbstractContainer, key, def) = getkey(contents(A), key, def)
-Base.get(A::AbstractContainer, key, def) = get(contents(A), key, def)
-Base.get!(A::AbstractContainer, key, def) = get!(contents(A), key, def)
-Base.getindex(A::AbstractContainer, key) = getindex(contents(A), key)
-Base.setindex!(A::AbstractContainer, val, key) =
+Base.haskey(A::AbstractDataBag, key) = haskey(contents(A), key)
+Base.keys(A::AbstractDataBag) = keys(contents(A))
+Base.values(A::AbstractDataBag) = values(contents(A))
+Base.getkey(A::AbstractDataBag, key, def) = getkey(contents(A), key, def)
+Base.get(A::AbstractDataBag, key, def) = get(contents(A), key, def)
+Base.get!(A::AbstractDataBag, key, def) = get!(contents(A), key, def)
+Base.getindex(A::AbstractDataBag, key) = getindex(contents(A), key)
+Base.setindex!(A::AbstractDataBag, val, key) =
     (setindex!(contents(A), val, key); return A)
-Base.delete!(A::AbstractContainer, key) = begin
+Base.delete!(A::AbstractDataBag, key) = begin
     delete!(contents(A), key)
     return A
 end
-Base.pop!(A::AbstractContainer, key) = pop!(contents(A), key)
-Base.pop!(A::AbstractContainer, key, def) = pop!(contents(A), key, def)
-Base.pairs(A::AbstractContainer) = pairs(contents(A))
+Base.pop!(A::AbstractDataBag, key) = pop!(contents(A), key)
+Base.pop!(A::AbstractDataBag, key, def) = pop!(contents(A), key, def)
+Base.pairs(A::AbstractDataBag) = pairs(contents(A))
 
 # Standard methods:
 #
@@ -214,20 +214,20 @@ Base.pairs(A::AbstractContainer) = pairs(contents(A))
 # - Specializing empty() and empty!() is sufficient for copy() and copy!()
 #   to work.
 
-Base.empty(A::Container{K,V}) where {K,V} =
-    wrap(Container, empty(contents(A), K, V))
-Base.empty(A::Container{<:Any,V}, ::Type{K}) where {K,V} =
-    wrap(Container, empty(contents(A), K, V))
-Base.empty(A::Container, ::Type{K}, ::Type{V}) where {K,V} =
-    wrap(Container, empty(contents(A), K, V))
+Base.empty(A::DataBag{K,V}) where {K,V} =
+    wrap(DataBag, empty(contents(A), K, V))
+Base.empty(A::DataBag{<:Any,V}, ::Type{K}) where {K,V} =
+    wrap(DataBag, empty(contents(A), K, V))
+Base.empty(A::DataBag, ::Type{K}, ::Type{V}) where {K,V} =
+    wrap(DataBag, empty(contents(A), K, V))
 
-Base.empty!(A::AbstractContainer) = begin
+Base.empty!(A::AbstractDataBag) = begin
     empty!(contents(A))
     return A
 end
 
 function Base.show(io::IO, ::MIME"text/plain",
-                   A::AbstractContainer{K,V}) where {K,V}
+                   A::AbstractDataBag{K,V}) where {K,V}
     n = length(A)
     summary(io, A)
     println(io, ":")

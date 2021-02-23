@@ -1,6 +1,6 @@
-module ContainersTests
-using Test, Containers, Dates
-using Containers: AbstractContainer, propertyname, withspecificvaluetype
+module DataBagsTests
+using Test, DataBags, Dates
+using DataBags: AbstractDataBag, propertyname, withspecificvaluetype
 
 function samevalues(A::AbstractArray, B::AbstractArray)
     @assert has_standard_indexing(A, B)
@@ -25,37 +25,37 @@ end
 keywords(args...; kwds...) = kwds
 arguments(args...; kwds...) = args
 
-# UnfinishedContainer does not extend Containers.contents()
-struct UnfinishedContainer{K,V,D<:AbstractDict{K,V}} <: AbstractContainer{K,V,D}
+# UnfinishedDataBag does not extend DataBags.contents()
+struct UnfinishedDataBag{K,V,D<:AbstractDict{K,V}} <: AbstractDataBag{K,V,D}
     data::D
-    UnfinishedContainer{K,V,D}(data::D) where {K,V,D<:AbstractDict{K,V}} =
+    UnfinishedDataBag{K,V,D}(data::D) where {K,V,D<:AbstractDict{K,V}} =
         new{K,V,D}(data)
 end
-UnfinishedContainer(data::D) where {K,V,D<:AbstractDict{K,V}} =
-    UnfinishedContainer{K,V,D}(data)
+UnfinishedDataBag(data::D) where {K,V,D<:AbstractDict{K,V}} =
+    UnfinishedDataBag{K,V,D}(data)
 
-# Create our own container with provided macro.
-Containers.@newtype SmallDB
+# Create our own data-bag with provided macro.
+DataBags.@newtype SmallDB
 
 # Check show().
 show(stdout, MIME"text/plain"(),
-     Container(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5), date=now()))
+     DataBag(a=21, b=π, c="hello", d=-1.8:0.1:14, e=rand(5), date=now()))
 println()
 
-@testset "Containers" begin
-    # Check missing specialization of Containers.contents().
-    Q = UnfinishedContainer(Dict{Symbol,Any}())
+@testset "DataBags" begin
+    # Check missing specialization of DataBags.contents().
+    Q = UnfinishedDataBag(Dict{Symbol,Any}())
     @test_throws ErrorException Q.units
 
     # Check impossible indexing of weird key type.
-    R = Container(Dict{Int,Int}())
+    R = DataBag(Dict{Int,Int}())
     @test_throws ErrorException propertyname(typeof(R), Symbol(42))
 
-    # Container with string keys.
+    # DataBag with string keys.
     D1 = Dict("units" => "km", "Δx" => 0.20, "Δy" => 0.15)
-    A1 = Container(D1)
+    A1 = DataBag(D1)
     T1 = typeof(A1)
-    B1 = wrap(Container, D1)
+    B1 = wrap(DataBag, D1)
     @test length(A1) == length(D1)
     @test keytype(T1) == keytype(D1)
     @test valtype(T1) == valtype(D1)
@@ -92,18 +92,18 @@ println()
     @test pop!(A1, "foo", :bar) == :bar
     @test pop!(A1, "units") == "km"
     @test_throws KeyError pop!(A1, "units")
-    C1 = convert(Container, A1) # should yield A1
+    C1 = convert(DataBag, A1) # should yield A1
     C1.bar = "foo"
     @test haskey(A1, "bar") && A1.bar == "foo"
     delete!(delete!(A1, "units"), "bar")
-    C1 = convert(Container{String,Float32}, A1) # should not yield A1
+    C1 = convert(DataBag{String,Float32}, A1) # should not yield A1
     C1.bar = π
     @test !haskey(A1, "bar") && C1.bar ≈ π
 
-    # Container with symbolic keys.
+    # DataBag with symbolic keys.
     D2 = Dict(:units => "µm", :Δx => 0.20, :Δy => 0.15)
     D3 = Dict(:name => "Mr. Doe", :Δx => 0.30, :Δy => 0.20)
-    A2 = Container(D2)
+    A2 = DataBag(D2)
     T2 = typeof(A2)
     @test length(A2) == length(D2)
     @test keytype(T2) == keytype(D2)
@@ -150,13 +150,13 @@ println()
     @test A6.Δx == A2.Δx && A6.Δy == A2.Δy
 
     # Test different constructors and combination of values.
-    B0 = Container()
+    B0 = DataBag()
     @test keytype(B0) == Symbol && valtype(B0) == Any
-    B1 = Container( a  =  1,  b  =  2,  c  =  3,  d  =  "µm",  e  =  :dif)
+    B1 = DataBag( a  =  1,  b  =  2,  c  =  3,  d  =  "µm",  e  =  :dif)
     @test keytype(B1) == Symbol && valtype(B1) == Any
-    B2 = Container(:a  => 1, :b  => 2, :c  => 3, :d  => "µm", :e  => :dif)
+    B2 = DataBag(:a  => 1, :b  => 2, :c  => 3, :d  => "µm", :e  => :dif)
     @test keytype(B2) == Symbol && valtype(B2) == Any
-    B3 = Container("a" => 1, "b" => 2, "c" => 3, "d" => "µm", "e" => :dif)
+    B3 = DataBag("a" => 1, "b" => 2, "c" => 3, "d" => "µm", "e" => :dif)
     @test keytype(B3) == String && valtype(B3) == Any
     N1 = Dict{Symbol,Number}() # to store the numerical values of A1
     N2 = Dict{Symbol,Number}() # to store computed values
@@ -166,18 +166,18 @@ println()
             N2[k] = 1 - v
         end
     end
-    B4 = Container(N1)
+    B4 = DataBag(N1)
     @test keytype(B4) == keytype(N1) && valtype(B4) == Any
-    B5 = Container{Symbol}(N2)
+    B5 = DataBag{Symbol}(N2)
     @test keytype(B5) == Symbol && valtype(B5) == Any
-    B6 = Container{Symbol,Float64}(N1)
+    B6 = DataBag{Symbol,Float64}(N1)
     @test keytype(B6) == Symbol && valtype(B6) == Float64
     @test all(x -> x == 1, values(merge(+, B5, B4)))
     @test all(x -> x == 1, values(merge(+, N2, B4)))
     @test all(x -> x == 1, values(merge!(+, B6, B5)))
 
     # Explictely check wrap() and check that the 2 objects share the same data.
-    W1 = wrap(Container, D1)
+    W1 = wrap(DataBag, D1)
     @test keytype(W1) == keytype(D1) && valtype(W1) == valtype(D1)
     @test !haskey(W1, "newkey") && !haskey(D1, "newkey")
     W1.newkey = 12345
@@ -185,7 +185,7 @@ println()
     @test W1.newkey == pop!(D1, "newkey")
     @test !haskey(W1, "newkey") && !haskey(D1, "newkey")
     #
-    W2 = wrap(Container, D2)
+    W2 = wrap(DataBag, D2)
     @test keytype(W2) == keytype(D2) && valtype(W2) == valtype(D2)
     @test !haskey(W2, :newkey) && !haskey(D2, :newkey)
     W2.newkey = 12345
@@ -193,7 +193,7 @@ println()
     @test W2.newkey == pop!(D2, :newkey)
     @test !haskey(W2, :newkey) && !haskey(D2, :newkey)
     #
-    W3 = wrap(Container{keytype(D2)}, D2)
+    W3 = wrap(DataBag{keytype(D2)}, D2)
     @test keytype(W3) == keytype(D2) && valtype(W3) == valtype(D2)
     @test !haskey(W3, :newkey) && !haskey(D2, :newkey)
     W3.newkey = 12345
@@ -201,7 +201,7 @@ println()
     @test W3.newkey == pop!(D2, :newkey)
     @test !haskey(W3, :newkey) && !haskey(D2, :newkey)
     #
-    W4 = wrap(Container{keytype(N2),valtype(N2)}, N2)
+    W4 = wrap(DataBag{keytype(N2),valtype(N2)}, N2)
     @test keytype(W4) == keytype(N2) && valtype(W4) == valtype(N2)
     @test !haskey(W4, :newkey) && !haskey(N2, :newkey)
     W4.newkey = 12345
@@ -209,7 +209,7 @@ println()
     @test W4.newkey == pop!(N2, :newkey)
     @test !haskey(W4, :newkey) && !haskey(N2, :newkey)
     #
-    W5 = wrap(Container{keytype(N1),valtype(N1),typeof(N1)}, N1)
+    W5 = wrap(DataBag{keytype(N1),valtype(N1),typeof(N1)}, N1)
     @test keytype(W5) == keytype(N1) && valtype(W5) == valtype(N1)
     @test !haskey(W5, :newkey) && !haskey(N1, :newkey)
     W5.newkey = 12345
@@ -245,10 +245,10 @@ println()
     @test isa(contents(Dict{Any,Integer},  args3...), Dict{Any,Integer})
     @test isa(contents(Dict{Any,Int16},    args3...), Dict{Any,Int16})
 
-    # Test container type created by Containers.@newtype.
+    # Test data-bag type created by DataBags.@newtype.
     X = SmallDB(date=now(), value=π, arr=rand(3))
     @test isa(X, SmallDB)
-    @test isa(X, Containers.AbstractContainer{Symbol,Any})
+    @test isa(X, DataBags.AbstractDataBag{Symbol,Any})
     @test isa(X, AbstractDict)
     @test length(X) == 3
     X.more = "some thing else"
