@@ -1,8 +1,9 @@
 # Flexible data containers for Julia
 
-| **License**                     | **Build Status**                                                | **Code Coverage**                                                   |
-|:--------------------------------|:----------------------------------------------------------------|:--------------------------------------------------------------------|
-| [![][license-img]][license-url] | [![][travis-img]][travis-url] [![][appveyor-img]][appveyor-url] | [![][coveralls-img]][coveralls-url] [![][codecov-img]][codecov-url] |
+[![License][license-img]][license-url]
+[![Build Status][github-ci-img]][github-ci-url]
+[![Build Status][appveyor-img]][appveyor-url]
+[![Coverage][codecov-img]][codecov-url]
 
 `DataBags` is a small [Julia][julia-url] package providing *data-bags* which
 are a quick way to store structured data.  Data-bags combine properties and
@@ -70,20 +71,21 @@ involves converting a symbol into a string).
 
 Data-bag constructors attempt to favor symbolic or string keys (to exploit the
 `obj.key` syntax) and enforce unspecific values of `Any` type (for
-flexibility).  In order to override these rules, the parametric versions of the
-`DataBag` constructor can be called instead:
+flexibility).  In order to override these rules, the parametric versions
+`DataBag{K}` or `DataBag{K,V}` of the constructor, with `K` the key type and
+`V` the value type, can be called instead.  For example:
 
 ```julia
 E = DataBag{Integer}(1 => 0.9, 2 => sqrt(2), 3 => 4)
 F = DataBag{Integer,Real}(1 => 0.9, 2 => sqrt(2), 3 => 4)
 ```
 
-yield two data-bags, `E` and `F`, with integer keys (of any `Integer` type),
-the values of `E` are unspecific while the values of `F` are restricted to be
-`Real`.
+yield two data-bags, `E` and `F`, both with integer keys (of any `Integer`
+type), the values of `E` are unspecific while the values of `F` are restricted
+to be `Real`.
 
-The same rules apply if the data-bag is built out of an existing dictionary (do
-not forget that data-bags are themselves abstract dictionaries).  So
+The same rules apply if the data-bag is built out of an existing dictionary
+(remember that data-bags are themselves abstract dictionaries).  So
 `DataBag(F)` yields a data-bag with keys of the same type as those of `F` (that
 is `Integer` in that case) but values of `Any` type.
 
@@ -281,14 +283,11 @@ evolutions of the `DataBags` package.
 [license-url]: ./LICENSE.md
 [license-img]: http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat
 
-[travis-img]: https://travis-ci.org/emmt/DataBags.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/emmt/DataBags.jl
+[github-ci-img]: https://github.com/emmt/DataBags.jl/actions/workflows/CI.yml/badge.svg?branch=master
+[github-ci-url]: https://github.com/emmt/DataBags.jl/actions/workflows/CI.yml?query=branch%3Amaster
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/emmt/DataBags.jl?branch=master
 [appveyor-url]: https://ci.appveyor.com/project/emmt/DataBags-jl/branch/master
-
-[coveralls-img]: https://coveralls.io/repos/github/emmt/DataBags.jl/badge.svg?branch=master
-[coveralls-url]: https://coveralls.io/github/emmt/DataBags.jl?branch=master
 
 [codecov-img]: https://codecov.io/gh/emmt/DataBags.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/emmt/DataBags.jl
